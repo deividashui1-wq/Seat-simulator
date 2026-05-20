@@ -1,300 +1,99 @@
--- Тактические настройки дизайна
-local Accent_Color = Color3.fromRGB(0, 180, 255) -- Тактический синий (можешь сменить на 0, 200, 100 для спецназ-зеленого)
-local BG_Main = Color3.fromRGB(20, 22, 25)
-local BG_Sidebar = Color3.fromRGB(15, 16, 18)
-local Text_Color = Color3.fromRGB(240, 240, 245)
+-- =============================================
+-- Cheat Menu by Grok | ESP + Assist + Movement
+-- =============================================
 
--- Сервисы
-local CoreGui = game:GetService("CoreGui")
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
+local Menu = {
+    Open = false,
+    CurrentTab = 1,
+}
 
--- UI Контейнер
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SOF_Tactical_Hub"
-ScreenGui.ResetOnSpawn = false
-pcall(function() ScreenGui.Parent = CoreGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+-- Основная функция меню
+function DrawMenu()
+    if not Menu.Open then return end
 
-----------------------------------------------------
--- ФУНКЦИЯ ПЕРЕТАСКИВАНИЯ (МОБИЛЬНЫЙ МАТРИКС)
-----------------------------------------------------
-local function makeDraggable(frame, dragAnchor)
-    local dragging, dragInput, dragStart, startPos
-    dragAnchor.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
+    ImGui.Begin("Cheat Menu", true, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.AlwaysAutoResize)
+
+    -- Табы
+    if ImGui.BeginTabBar("MainTabs") then
+        if ImGui.BeginTabItem("ESP") then
+            Menu.CurrentTab = 1
+            ImGui.Separator()
+            
+            ImGui.Checkbox("Chams", Config.ESP.Chams)
+            ImGui.Checkbox("Boxes", Config.ESP.Boxes)
+            ImGui.Checkbox("Names", Config.ESP.Names)
+            ImGui.Checkbox("Health", Config.ESP.Health)
+            ImGui.Checkbox("Distance", Config.ESP.Distance)
+            
+            ImGui.EndTabItem()
         end
-    end)
-    dragAnchor.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
+
+        if ImGui.BeginTabItem("Assist") then
+            Menu.CurrentTab = 2
+            ImGui.Separator()
+            
+            ImGui.Checkbox("Hitboxes", Config.Assist.Hitboxes)
+            ImGui.Checkbox("Aimbot", Config.Assist.Aimbot)
+            ImGui.Checkbox("Triggerbot", Config.Assist.Triggerbot)
+            
+            ImGui.EndTabItem()
         end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            TweenService:Create(frame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-            }):Play()
+
+        if ImGui.BeginTabItem("Movement") then
+            Menu.CurrentTab = 3
+            ImGui.Separator()
+            
+            ImGui.Checkbox("Speed Hack", Config.Movement.SpeedHack)
+            if Config.Movement.SpeedHack[1] then
+                ImGui.SliderFloat("Speed", Config.Movement.Speed, 1.0, 10.0)
+            end
+            
+            ImGui.Checkbox("NoClip", Config.Movement.NoClip)
+            ImGui.Checkbox("Fly", Config.Movement.Fly)
+            
+            ImGui.EndTabItem()
         end
-    end)
-end
-
-----------------------------------------------------
--- ТАКТИЧЕСКАЯ КНОПКА ОТКРЫТИЯ (ПЕРЕТАСКИВАЕМАЯ)
-----------------------------------------------------
-local OpenBtn = Instance.new("TextButton")
-OpenBtn.Name = "OpenButton"
-OpenBtn.Parent = ScreenGui
-OpenBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
-OpenBtn.Size = UDim2.new(0, 45, 0, 45)
-OpenBtn.BackgroundColor3 = BG_Sidebar
-OpenBtn.Text = "⚡"
-OpenBtn.TextColor3 = Accent_Color
-OpenBtn.TextSize = 20
-OpenBtn.Font = Enum.Font.SourceSansBold
-
-local OpenCorner = Instance.new("UICorner") OpenCorner.CornerRadius = UDim.new(1, 0) OpenCorner.Parent = OpenBtn
-local OpenStroke = Instance.new("UIStroke") OpenStroke.Color = Accent_Color OpenStroke.Thickness = 1.5 OpenStroke.Parent = OpenBtn
-
-makeDraggable(OpenBtn, OpenBtn)
-
-----------------------------------------------------
--- ГЛАВНОЕ МЕНЮ (БОЛЬШОЕ И УДОБНОЕ)
-----------------------------------------------------
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = ScreenGui
-MainFrame.Position = UDim2.new(0.5, -225, 0.5, -140)
-MainFrame.Size = UDim2.new(0, 450, 0, 280) -- Увеличенный размер для мобилок
-MainFrame.BackgroundColor3 = BG_Main
-MainFrame.Visible = true
-
-local MainCorner = Instance.new("UICorner") MainCorner.CornerRadius = UDim.new(0, 10) MainCorner.Parent = MainFrame
-local MainStroke = Instance.new("UIStroke") MainStroke.Color = Color3.fromRGB(40, 45, 50) MainStroke.Thickness = 1 MainStroke.Parent = MainFrame
-
--- Сайдбар для огромного количества вкладок (Скролл-панель)
-local Sidebar = Instance.new("ScrollingFrame")
-Sidebar.Name = "Sidebar"
-Sidebar.Parent = MainFrame
-Sidebar.Size = UDim2.new(0, 120, 1, 0)
-Sidebar.BackgroundColor3 = BG_Sidebar
-Sidebar.CanvasSize = UDim2.new(0, 0, 1.5, 0) -- Позволяет крутить вкладки вверх/вниз
-Sidebar.ScrollBarThickness = 2
-Sidebar.ScrollingDirection = Enum.ScrollingDirection.Y
-
-local SidebarCorner = Instance.new("UICorner") SidebarCorner.CornerRadius = UDim.new(0, 10) SidebarCorner.Parent = Sidebar
-
--- Название меню сверху сайдбара
-local Logo = Instance.new("TextLabel")
-Logo.Size = UDim2.new(1, 0, 0, 40)
-Logo.BackgroundTransparency = 1
-Logo.Text = "🔴 SPEC-OPS"
-Logo.TextColor3 = Text_Color
-Logo.TextSize = 13
-Logo.Font = Enum.Font.SourceSansBold
-Logo.Parent = Sidebar
-
--- Лист-лейаут для вкладок
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.Parent = Sidebar
-TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabListLayout.Padding = UDim.new(0, 4)
-TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
--- Прокладка под Логотипом, чтобы первая вкладка не перекрывала его
-local LogoSpacer = Instance.new("Frame") LogoSpacer.Size = UDim2.new(1,0,0,35) LogoSpacer.BackgroundTransparency = 1 LogoSpacer.Parent = Sidebar LogoSpacer.LayoutOrder = 0
-
--- Контент-зона (Справа)
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Name = "ContentContainer"
-ContentContainer.Parent = MainFrame
-ContentContainer.Position = UDim2.new(0, 130, 0, 10)
-ContentContainer.Size = UDim2.new(1, -140, 1, -20)
-ContentContainer.BackgroundTransparency = 1
-
-makeDraggable(MainFrame, Logo) -- Перетаскивать меню можно за логотип "SPEC-OPS"
-
-----------------------------------------------------
--- ДИНАМИЧЕСКАЯ СИСТЕМА СОЗДАНИЯ ВКЛАДОК
-----------------------------------------------------
-local tabs = {}
-local firstTab = true
-local tabOrder = 1
-
-local function CreateTab(tabName, icon)
-    -- Кнопка во фрейме сайдбара
-    local TabBtn = Instance.new("TextButton")
-    TabBtn.Size = UDim2.new(0.9, 0, 0, 32)
-    TabBtn.BackgroundColor3 = Color3.fromRGB(25, 27, 30)
-    TabBtn.Text = (icon or "") .. " " .. tabName
-    TabBtn.TextColor3 = Color3.fromRGB(140, 145, 150)
-    TabBtn.TextSize = 13
-    TabBtn.Font = Enum.Font.SourceSansBold
-    TabBtn.Parent = Sidebar
-    TabBtn.LayoutOrder = tabOrder
-    tabOrder = tabOrder + 1
-    
-    local BtnCorner = Instance.new("UICorner") BtnCorner.CornerRadius = UDim.new(0, 5) BtnCorner.Parent = TabBtn
-
-    -- Страница под эту вкладку (с вертикальным скроллом функций)
-    local TabPage = Instance.new("ScrollingFrame")
-    TabPage.Size = UDim2.new(1, 0, 1, 0)
-    TabPage.BackgroundTransparency = 1
-    TabPage.CanvasSize = UDim2.new(0, 0, 2, 0)
-    TabPage.ScrollBarThickness = 3
-    TabPage.Visible = false
-    TabPage.Parent = ContentContainer
-
-    local PageList = Instance.new("UIListLayout") PageList.Parent = TabPage; PageList.SortOrder = Enum.SortOrder.LayoutOrder; PageList.Padding = UDim.new(0, 6)
-
-    if firstTab then
-        TabBtn.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
-        TabBtn.TextColor3 = Accent_Color
-        TabPage.Visible = true
-        firstTab = false
+        ImGui.EndTabBar()
     end
 
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, t in pairs(tabs) do
-            t.Page.Visible = false
-            TweenService:Create(t.Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(25, 27, 30), TextColor3 = Color3.fromRGB(140, 145, 150)}):Play()
-        end
-        TabPage.Visible = true
-        TweenService:Create(TabBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 35, 45), TextColor3 = Accent_Color}):Play()
-    end)
+    ImGui.Separator()
+    if ImGui.Button("Закрыть меню") then
+        Menu.Open = false
+    end
 
-    table.insert(tabs, {Btn = TabBtn, Page = TabPage})
-    return TabPage
+    ImGui.End()
 end
 
-----------------------------------------------------
--- ЭЛЕМЕНТЫ ИНТЕРФЕЙСА (TOGGLE / BUTTON)
-----------------------------------------------------
-local function CreateToggle(parentPage, text, default, callback)
-    local ToggleFrame = Instance.new("Frame")
-    ToggleFrame.Size = UDim2.new(0.96, 0, 0, 38)
-    ToggleFrame.BackgroundColor3 = Color3.fromRGB(26, 28, 32)
-    ToggleFrame.Parent = parentPage
+-- Конфиг
+Config = Config or {
+    ESP = {
+        Chams = {false},
+        Boxes = {true},
+        Names = {false},
+        Health = {false},
+        Distance = {false},
+    },
+    Assist = {
+        Hitboxes = {true},
+        Aimbot = {false},
+        Triggerbot = {false},
+    },
+    Movement = {
+        SpeedHack = {false},
+        Speed = {5.0},
+        NoClip = {false},
+        Fly = {false},
+    }
+}
 
-    local TFCorner = Instance.new("UICorner") TFCorner.CornerRadius = UDim.new(0, 6) TFCorner.Parent = ToggleFrame
+-- Главный цикл
+function OnUpdate()
+    if ImGui.IsKeyPressed(ImGuiKey.Insert) then
+        Menu.Open = not Menu.Open
+    end
 
-    local Label = Instance.new("TextLabel")
-    Label.Position = UDim2.new(0, 10, 0, 0)
-    Label.Size = UDim2.new(0.7, 0, 1, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = Text_Color
-    Label.TextSize = 13
-    Label.Font = Enum.Font.SourceSansMedium
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = ToggleFrame
-
-    local Switch = Instance.new("TextButton")
-    Switch.Position = UDim2.new(1, -45, 0.5, -9)
-    Switch.Size = UDim2.new(0, 36, 0, 18)
-    Switch.BackgroundColor3 = default and Accent_Color or Color3.fromRGB(60, 65, 70)
-    Switch.Text = ""
-    Switch.Parent = ToggleFrame
-    local SCorner = Instance.new("UICorner") SCorner.CornerRadius = UDim.new(1, 0) SCorner.Parent = Switch
-
-    local Circle = Instance.new("Frame")
-    Circle.Position = default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-    Circle.Size = UDim2.new(0, 14, 0, 14)
-    Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Circle.Parent = Switch
-    local CCorner = Instance.new("UICorner") CCorner.CornerRadius = UDim.new(1,0) CCorner.Parent = Circle
-
-    local enabled = default
-    Switch.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        if enabled then
-            TweenService:Create(Switch, TweenInfo.new(0.15), {BackgroundColor3 = Accent_Color}):Play()
-            TweenService:Create(Circle, TweenInfo.new(0.15), {Position = UDim2.new(1, -16, 0.5, -7)}):Play()
-        else
-            TweenService:Create(Switch, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(60, 65, 70)}):Play()
-            TweenService:Create(Circle, TweenInfo.new(0.15), {Position = UDim2.new(0, 2, 0.5, -7)}):Play()
-        end
-        callback(enabled)
-    end)
+    DrawMenu()
 end
 
-local function CreateButton(parentPage, text, callback)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(0.96, 0, 0, 36)
-    Button.BackgroundColor3 = Color3.fromRGB(35, 40, 45)
-    Button.Text = text
-    Button.TextColor3 = Text_Color
-    Button.TextSize = 13
-    Button.Font = Enum.Font.SourceSansBold
-    Button.Parent = parentPage
-    
-    local BCorner = Instance.new("UICorner") BCorner.CornerRadius = UDim.new(0, 6) BCorner.Parent = Button
-    
-    Button.MouseButton1Click:Connect(function()
-        -- Эффект быстрой вспышки при нажатии
-        Button.BackgroundColor3 = Accent_Color
-        wait(0.1)
-        Button.BackgroundColor3 = Color3.fromRGB(35, 40, 45)
-        callback()
-    end)
-end
-
-----------------------------------------------------
--- СОЗДАНИЕ ВСЕХ ВКЛАДОК (ОТ AIM ДО SETTINGS)
-----------------------------------------------------
-
-local AimPage      = CreateTab("Aim", "🎯")
-local VisualsPage  = CreateTab("Visuals", "👁️")
-local WeaponPage   = CreateTab("Weapon", "🔫")
-local PlayerPage   = CreateTab("Player", "🏃")
-local TeleportPage = CreateTab("Teleport", "🌀")
-local SettingsPage = CreateTab("Settings", "⚙️")
-
--- 1. ВКЛАДКА: AIM
-CreateToggle(AimPage, "Silent Aim (Target NPC)", false, function(state) end)
-CreateToggle(AimPage, "Hitbox Expander", false, function(state) end)
-CreateToggle(AimPage, "Lock On Team Only", false, function(state) end)
-
--- 2. ВКЛАДКА: VISUALS
-CreateToggle(VisualsPage, "ESP Boxes", false, function(state) end)
-CreateToggle(VisualsPage, "ESP Names", false, function(state) end)
-CreateToggle(VisualsPage, "Show FOV Circle (120)", false, function(state) end)
-CreateToggle(VisualsPage, "Team Check", true, function(state) end)
-
--- 3. ВКЛАДКА: WEAPON (Для Спецназ-пушек)
-CreateToggle(WeaponPage, "No Recoil (Без отдачи)", false, function(state) end)
-CreateToggle(WeaponPage, "No Spread (Без разброса)", false, function(state) end)
-CreateToggle(WeaponPage, "Infinite Ammo (Инф. Патроны)", false, function(state) end)
-CreateToggle(WeaponPage, "Fast Reload (Быстрая перезарядка)", false, function(state) end)
-
--- 4. ВКЛАДКА: PLAYER
-CreateToggle(PlayerPage, "Godmode (God Simulation)", false, function(state) end)
-CreateToggle(PlayerPage, "Infinite Stamina (Выносливость)", false, function(state) end)
-CreateToggle(PlayerPage, "Speedhack", false, function(state) end)
-
--- 5. ВКЛАДКА: TELEPORT
-CreateButton(TeleportPage, "Teleport to Safe Zone", function() print("Teleported!") end)
-CreateButton(TeleportPage, "Teleport to Weapon Armory", function() print("Armory!") end)
-CreateButton(TeleportPage, "Teleport to Objective", function() print("Objective!") end)
-
--- 6. ВКЛАДКА: SETTINGS
-CreateButton(SettingsPage, "Destroy Menu GUI (Удалить чит)", function()
-    ScreenGui:Destroy()
-end)
-CreateButton(SettingsPage, "Reset Settings to Default", function() print("Resetting...") end)
-
-
--- Скрытие/Открытие меню по кнопке-молнии
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
+-- Хуки (зависит от твоего луа-чита)
+print("§a[Cheat Menu] Загружен! Нажми INSERT")
